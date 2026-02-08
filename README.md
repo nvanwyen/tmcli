@@ -1,4 +1,4 @@
-# tmcli
+# Time Machine CLI (tmcli)
 
 Version: v1.0.2
 
