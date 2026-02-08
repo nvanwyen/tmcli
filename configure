@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+# configure
+# ~~~~~~~~~~~~~~~~~~~~~
+#
+# Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)
+# All rights reserved
+#
+# Distributed under the MTI Software License, Version 0.1.
+#
+# as defined by accompanying file MTI-LICENSE-0.1.info or
+# at http://www.mtihq.com/license/MTI-LICENSE-0.1.info
+#
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BUILD_DIR="${SCRIPT_DIR}/build"
+BUILD_TYPE="Release"
+INSTALL_PREFIX="/usr/local/bin"
+CLEAN_ONLY=false
+DO_INSTALL=false
+DO_UNINSTALL=false
+
+# Parse options
+usage() {
+    echo "Usage: $(basename "$0") [options]"
+    echo ""
+    echo "Options:"
+    echo "  -r, --release    Build in release mode (default)"
+    echo "  -d, --debug      Build in debug mode"
+    echo "  -c, --clean      Clean the build directory and exit"
+    echo "  -i, --install    Build and install to prefix (default: /usr/local/bin)"
+    echo "  -u, --uninstall  Remove installed binary from prefix"
+    echo "  -p, --prefix     Set install prefix (default: /usr/local/bin)"
+    echo "  -h, --help       Show this help message"
+}
+
+# Clean the build directory
+clean() {
+    if [ -d "${BUILD_DIR}" ]; then
+        echo "Cleaning build directory ..."
+        chmod -R u+w "${BUILD_DIR}"
+        rm -rf "${BUILD_DIR}"
+        if [[ -f ${SCRIPT_DIR}/bin/tmcli ]] ; then
+            rm -f ${SCRIPT_DIR}/bin/tmcli
+        fi
+    fi
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r|--release)
+            BUILD_TYPE="Release"
+            shift
+            ;;
+        -d|--debug)
+            BUILD_TYPE="Debug"
+            shift
+            ;;
+        -c|--clean)
+            CLEAN_ONLY=true
+            shift
+            ;;
+        -i|--install)
+            DO_INSTALL=true
+            shift
+            ;;
+        -u|--uninstall)
+            DO_UNINSTALL=true
+            shift
+            ;;
+        -p|--prefix)
+            INSTALL_PREFIX="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Clean-only mode
+if [ "${CLEAN_ONLY}" = true ]; then
+    clean
+    echo "Cleaned."
+    exit 0
+fi
+
+# Uninstall mode
+if [ "${DO_UNINSTALL}" = true ]; then
+    if [ -f "${INSTALL_PREFIX}/tmcli" ]; then
+        echo "Removing ${INSTALL_PREFIX}/tmcli ..."
+        rm -f "${INSTALL_PREFIX}/tmcli"
+        echo "Uninstalled."
+    else
+        echo "Nothing to uninstall (${INSTALL_PREFIX}/tmcli not found)."
+    fi
+    exit 0
+fi
+
+# Clean before configuring
+clean
+
+echo "Creating build directory ..."
+mkdir -p "${BUILD_DIR}"
+
+# Run CMake from the build directory
+cd "${BUILD_DIR}"
+echo "Configuring ${BUILD_TYPE} build ..."
+cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" ..
+make
+
+if [[ -f ${SCRIPT_DIR}/bin/tmcli ]] ; then
+    echo ; echo "Found target bin/tmcli [$(sha1sum ${SCRIPT_DIR}/bin/tmcli | awk '{print $1}')]"
+fi
+
+cd ${SCRIPT_DIR}
+chmod -R u+w "${BUILD_DIR}"
+rm -Rf ${BUILD_DIR}
+
+# Install if requested
+if [ "${DO_INSTALL}" = true ]; then
+    echo "Installing tmcli to ${INSTALL_PREFIX} ..."
+    cp "${SCRIPT_DIR}/bin/tmcli" "${INSTALL_PREFIX}/tmcli"
+    echo "Installed."
+fi
