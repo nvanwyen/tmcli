@@ -17,18 +17,18 @@ rude comments particularly those that add nothing constructive._
 ### Motive
 This project was written because, I wanted to learn Go, but more becasue I
 wanted a command line TUI that wrapped up the Mac Time Machine. I wanted a
-statusbar monitor, a way to start, stop, restore etc... (those features provided
-by the Mac tmutil) that I could call from the terminal, because that's where I'
-primarly live in my day-to-day job. I made this project because I couldn't find
-another wrapper that provide a simple TUI interface or a monitoring system that
-was easy to use and undertand. I made it a public project with the idea that I
-might not be the only one with this request.
+statusbar monitor, a way to start, stop, restore etc... _(those features
+provided by the Mac tmutil)_ that I could call from the terminal, because that's
+where I primarly live in my day-to-day job. I made this project because I
+couldn't find another wrapper that would provide a simple TUI interface or a
+monitoring system that was easy to use and undertand. I made it a public project
+with the idea that I might not be the only one with this request.
 
 ### Bugs and reporting
-Feel free to add bugs and comments in the project, and if you have feature
-request I'll be happy to consider them. If you clone the project and have merge
+Feel free to add bugs and comments in the project, and if you have any feature
+requests I'll be happy to consider them. If you clone the project and have merge
 requests, I'll also consider them. However, please note that this is not a
-primary project for me, and it make take a hile for me to get around to your
+primary project for me, and it may take awhile for me to get around to your
 requests. I'm not ignoring you, I'm just busy with other things, so please be
 patient with me.
 
