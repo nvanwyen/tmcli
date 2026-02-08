@@ -6,13 +6,32 @@ A macOS Time Machine CLI and interactive TUI built in Go. Wraps the native
 `tmutil` utility with a friendlier interface, hotkey-driven menus, a live
 backup monitor, and direct command-line access to every operation.
 
-## _Personal Note_
+## Personal Notes
 _This project represents my first dive into the Go language. Since it is my
 first, I do not expect it to be perfect or follow all the "industry standards"
 accepted by Professional Go Developers. So, if you have comments about how it's
 written, organized and formatted please be kind with your comments. I am more
 than happy to listen and take constructive criticism, but I will not listen to
 rude comments particularly those that add nothing constructive._
+
+### Motive
+This project was written because, I wanted to learn Go, but more becasue I
+wanted a command line TUI that wrapped up the Mac Time Machine. I wanted a
+statusbar monitor, a way to start, stop, restore etc... (those features provided
+by the Mac tmutil) that I could call from the terminal, because that's where I'
+primarly live in my day-to-day job. I made this project because I couldn't find
+another wrapper that provide a simple TUI interface or a monitoring system that
+was easy to use and undertand. I made it a public project with the idea that I
+might not be the only one with this request.
+
+### Bugs and reporting
+Feel free to add bugs and comments in the project, and if you have feature
+request I'll be happy to consider them. If you clone the project and have merge
+requests, I'll also consider them. However, please note that this is not a
+primary project for me, and it make take a hile for me to get around to your
+requests. I'm not ignoring you, I'm just busy with other things, so please be
+patient with me.
+
 
 ## Features
 
