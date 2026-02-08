@@ -46,6 +46,7 @@ func tickCmd() tea.Cmd {
 // MonitorModel is a Bubbletea model for monitoring backup progress.
 // It can be used standalone (CLI --monitor) or embedded in the TUI.
 type MonitorModel struct {
+	version  string
 	info     tmutil.StatusInfo
 	err      error
 	width    int
@@ -55,8 +56,8 @@ type MonitorModel struct {
 }
 
 // NewMonitorModel creates a monitor model.
-func NewMonitorModel(altScreen bool) MonitorModel {
-	return MonitorModel{altScreen: altScreen}
+func NewMonitorModel(version string, altScreen bool) MonitorModel {
+	return MonitorModel{version: version, altScreen: altScreen}
 }
 
 // Init starts the first poll immediately.
@@ -101,7 +102,8 @@ func (m MonitorModel) View() string {
 
 	if m.altScreen {
 		var b strings.Builder
-		b.WriteString(titleStyle.Render("Backup Monitor"))
+		content := lipgloss.JoinVertical(lipgloss.Center, "Backup Monitor", m.version)
+		b.WriteString(titleStyle.Render(content))
 		b.WriteString("\n\n")
 		b.WriteString(outputStyle.Render(body))
 		b.WriteString("\n\n")

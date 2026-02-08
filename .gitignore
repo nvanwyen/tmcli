@@ -31,6 +31,9 @@ go.work.sum
 # .idea/
 # .vscode/
 
+# generated
+source/version.go
+
 # other
 bin
 build

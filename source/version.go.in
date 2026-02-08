@@ -1,0 +1,17 @@
+//
+// version.go [generated from version.go.in]
+// ~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)
+// All rights reserved
+//
+// Distributed under the MTI Software License, Version 0.1.
+//
+// as defined by accompanying file MTI-LICENSE-0.1.info or
+// at http://www.mtihq.com/license/MTI-LICENSE-0.1.info
+//
+
+package main
+
+// Version is set at build time by CMake from the VERSION file.
+const Version = "@TMCLI_VERSION@"

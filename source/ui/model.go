@@ -29,6 +29,7 @@ const (
 	outputView
 	monitorView
 	inputView
+	versionView
 	helpCategoryView
 	helpCommandView
 	helpDetailView
@@ -41,6 +42,7 @@ type commandResultMsg struct {
 
 // Model is the top-level Bubbletea model.
 type Model struct {
+	version    string
 	view       viewState
 	categories []Category
 	catCursor  int // cursor within category menu
@@ -58,8 +60,9 @@ type Model struct {
 }
 
 // NewModel returns the initial model.
-func NewModel() Model {
+func NewModel(version string) Model {
 	return Model{
+		version:    version,
 		view:       categoryView,
 		categories: Categories(),
 	}
@@ -90,6 +93,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateMonitor(msg)
 		case inputView:
 			return m.updateInput(msg)
+		case versionView:
+			return m.updateVersion(msg)
 		case helpCategoryView:
 			return m.updateHelpCategory(msg)
 		case helpCommandView:
@@ -125,7 +130,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // --- Category menu ---
 
 func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	helpIdx := len(m.categories)
+	versionIdx := len(m.categories)
+	helpIdx := versionIdx + 1
 	quitIdx := helpIdx + 1
 	count := quitIdx + 1
 	switch msg.String() {
@@ -145,6 +151,9 @@ func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	case "enter":
 		return m.selectCategoryItem()
+	case "v":
+		m.view = versionView
+		return m, nil
 	case "h":
 		m.view = helpCategoryView
 		m.helpCursor = 0
@@ -166,11 +175,15 @@ func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) selectCategoryItem() (tea.Model, tea.Cmd) {
-	helpIdx := len(m.categories)
+	versionIdx := len(m.categories)
+	helpIdx := versionIdx + 1
 	quitIdx := helpIdx + 1
 	switch m.catCursor {
 	case quitIdx:
 		return m, tea.Quit
+	case versionIdx:
+		m.view = versionView
+		return m, nil
 	case helpIdx:
 		m.view = helpCategoryView
 		m.helpCursor = 0
@@ -237,7 +250,7 @@ func (m Model) updateCommand(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) selectCommand(cmd Command) (tea.Model, tea.Cmd) {
 	if cmd.IsMonitor {
-		m.monitor = NewMonitorModel(true)
+		m.monitor = NewMonitorModel(m.version, true)
 		m.view = monitorView
 		return m, m.monitor.Init()
 	}
@@ -336,6 +349,42 @@ func (m Model) updateInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	updated, cmd := m.input.Update(msg)
 	m.input = updated
 	return m, cmd
+}
+
+// --- Version view ---
+
+func (m Model) updateVersion(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "ctrl+c":
+		return m, tea.Quit
+	case "esc", "backspace", "b":
+		m.view = categoryView
+		return m, nil
+	case "q":
+		return m, tea.Quit
+	}
+	return m, nil
+}
+
+func (m Model) renderVersion() string {
+	var b strings.Builder
+
+	b.WriteString(m.renderTitle("Time Machine CLI"))
+	b.WriteString("\n\n")
+
+	var info strings.Builder
+	fmt.Fprintf(&info, "Time Machine CLI %s\n\n", m.version)
+	info.WriteString("Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)\n")
+	info.WriteString("All rights reserved\n\n")
+	info.WriteString("Distributed under the MTI Software License, Version 0.1.")
+	b.WriteString(outputStyle.Render(info.String()))
+
+	b.WriteString("\n\n")
+	b.WriteString(helpStyle.Render("b/esc: back • q: quit"))
+
+	return lipgloss.Place(m.width, m.height,
+		lipgloss.Center, lipgloss.Center,
+		b.String())
 }
 
 // --- Help views ---
@@ -459,6 +508,12 @@ func (m Model) updateHelpDetail(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// renderTitle renders a bordered title with the version centered below it inside the box.
+func (m Model) renderTitle(title string) string {
+	content := lipgloss.JoinVertical(lipgloss.Center, title, m.version)
+	return titleStyle.Render(content)
+}
+
 // --- Views ---
 
 // View implements tea.Model.
@@ -474,6 +529,8 @@ func (m Model) View() string {
 		return m.renderMonitor()
 	case inputView:
 		return m.input.View()
+	case versionView:
+		return m.renderVersion()
 	case helpCategoryView:
 		return m.renderHelpCategory()
 	case helpCommandView:
@@ -487,11 +544,11 @@ func (m Model) View() string {
 func (m Model) renderCategory() string {
 	var b strings.Builder
 
-	title := titleStyle.Render("Time Machine CLI")
-	b.WriteString(title)
+	b.WriteString(m.renderTitle("Time Machine CLI"))
 	b.WriteString("\n\n")
 
-	helpIdx := len(m.categories)
+	versionIdx := len(m.categories)
+	helpIdx := versionIdx + 1
 	quitIdx := helpIdx + 1
 
 	var menu strings.Builder
@@ -503,6 +560,11 @@ func (m Model) renderCategory() string {
 		}
 	}
 	menu.WriteString("\n")
+	if m.catCursor == versionIdx {
+		fmt.Fprintf(&menu, "> [v] Version\n")
+	} else {
+		fmt.Fprintf(&menu, "  [v] Version\n")
+	}
 	if m.catCursor == helpIdx {
 		fmt.Fprintf(&menu, "> [h] Help\n")
 	} else {
@@ -527,8 +589,7 @@ func (m Model) renderCommand() string {
 	var b strings.Builder
 
 	cat := m.categories[m.catCursor]
-	title := titleStyle.Render(cat.Title)
-	b.WriteString(title)
+	b.WriteString(m.renderTitle(cat.Title))
 	b.WriteString("\n\n")
 
 	// Check if any command in this category requires root
@@ -601,8 +662,7 @@ func (m Model) renderCommand() string {
 func (m Model) renderOutput() string {
 	var b strings.Builder
 
-	title := titleStyle.Render("Time Machine CLI")
-	b.WriteString(title)
+	b.WriteString(m.renderTitle("Time Machine CLI"))
 	b.WriteString("\n\n")
 
 	if m.err != nil {
@@ -645,8 +705,7 @@ func (m Model) renderMonitor() string {
 func (m Model) renderHelpCategory() string {
 	var b strings.Builder
 
-	title := titleStyle.Render("Help")
-	b.WriteString(title)
+	b.WriteString(m.renderTitle("Help"))
 	b.WriteString("\n\n")
 
 	cats := Categories()
@@ -686,8 +745,7 @@ func (m Model) renderHelpCommand() string {
 
 	cats := Categories()
 	cat := cats[m.helpCursor]
-	title := titleStyle.Render("Help — " + cat.Title)
-	b.WriteString(title)
+	b.WriteString(m.renderTitle("Help — " + cat.Title))
 	b.WriteString("\n\n")
 
 	// Check if any command in this category requires root
@@ -760,8 +818,7 @@ func (m Model) renderHelpCommand() string {
 func (m Model) renderHelpDetail() string {
 	var b strings.Builder
 
-	title := titleStyle.Render("Help")
-	b.WriteString(title)
+	b.WriteString(m.renderTitle("Help"))
 	b.WriteString("\n\n")
 	b.WriteString(outputStyle.Render(m.helpOutput))
 	b.WriteString("\n\n")

@@ -1,8 +1,18 @@
 # tmcli
 
+Version: v1.0.2
+
 A macOS Time Machine CLI and interactive TUI built in Go. Wraps the native
 `tmutil` utility with a friendlier interface, hotkey-driven menus, a live
 backup monitor, and direct command-line access to every operation.
+
+## Personal note
+This project represents my first dive into the Go language. Since it is my
+first, I do not expect it to be perfect or follow all the "industry standards"
+accepted by Professional Go Developers. So, if you have comments about how it's
+written, organized and formatted please be kind with your comments. I am more
+than happy to listen and take constructive criticism, but I will not listen to
+rude comments particularly those that add nothing constructive.
 
 ## Features
 
@@ -72,6 +82,13 @@ tmcli --help
 ```
 
 ## Commands
+
+### General
+
+| Flag              | Description                          | Example            |
+|-------------------|--------------------------------------|--------------------|
+| `-v`, `--version` | Print the version and exit           | `tmcli --version`  |
+| `-h`, `--help`    | Print usage information and exit     | `tmcli --help`     |
 
 ### Backup
 

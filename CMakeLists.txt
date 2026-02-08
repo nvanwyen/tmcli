@@ -38,6 +38,17 @@ set(BINARY_NAME tmcli)
 set(BINARY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin")
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/source")
 
+# Read version from VERSION file
+file(STRINGS "${SOURCE_DIR}/VERSION" TMCLI_VERSION)
+message(STATUS "Version:     ${TMCLI_VERSION}")
+
+# Generate version.go from template
+configure_file(
+    "${SOURCE_DIR}/version.go.in"
+    "${SOURCE_DIR}/version.go"
+    @ONLY
+)
+
 # Set Go build flags based on build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(GO_BUILD_FLAGS -gcflags "all=-N -l")

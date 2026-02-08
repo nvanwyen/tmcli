@@ -33,6 +33,13 @@ func main() {
 	args := os.Args[2:]
 
 	switch verb {
+	case "--version", "-version", "-v", "version":
+		fmt.Printf("Time Machine CLI %s\n\n", Version)
+		fmt.Println("Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)")
+		fmt.Println("All rights reserved")
+		fmt.Println()
+		fmt.Println("Distributed under the MTI Software License, Version 0.1.")
+		return
 	case "--help", "-help", "-h", "help":
 		printUsage()
 	case "tui":
@@ -64,7 +71,7 @@ func runCLI(fn func([]string) (string, error), args []string) {
 }
 
 func runMonitor() {
-	p := tea.NewProgram(ui.NewMonitorModel(false))
+	p := tea.NewProgram(ui.NewMonitorModel(Version, false))
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -72,7 +79,7 @@ func runMonitor() {
 }
 
 func runTUI() {
-	p := tea.NewProgram(ui.NewModel(), tea.WithAltScreen())
+	p := tea.NewProgram(ui.NewModel(Version), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -80,6 +87,7 @@ func runTUI() {
 }
 
 func printUsage() {
+	fmt.Fprintf(os.Stderr, "tmcli %s\n\n", Version)
 	fmt.Fprintf(os.Stderr, "Usage: %s [command] [arguments]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Running with no arguments launches the interactive TUI.\n\n")
 	fmt.Fprintf(os.Stderr, "Commands:\n")
