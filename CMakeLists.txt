@@ -17,7 +17,7 @@ project(tmcli LANGUAGES NONE)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # ensure out-of-source builds (error when not out-of-source)
-include(MacroEnsureOutOfSourceBuild)
+include(EnsureOutOfSourceBuild)
 EnsureOutOfSourceBuild( "
     *** IMPORTANT *** 
     Builds can *ONLY* be out-of-source!
