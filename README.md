@@ -24,7 +24,7 @@ couldn't find another wrapper that would provide a simple TUI interface or a
 monitoring system that was easy to use and undertand. I made it a public project
 with the idea that I might not be the only one with this request.
 
-### Bugs and reporting
+### Bugs, reporting and requests
 Feel free to add bugs and comments in the project, and if you have any feature
 requests I'll be happy to consider them. If you clone the project and have merge
 requests, I'll also consider them. However, please note that this is not a
