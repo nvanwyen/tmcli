@@ -41,13 +41,39 @@ patient with me.
 - **Built-in help** — browse detailed descriptions, parameters, and CLI usage for every command
 - **Root awareness** — commands that require `sudo` are clearly marked in the TUI
 
-## Requirements
+## Installation
+
+### Homebrew
+
+The easiest way to install `tmcli` is with [Homebrew](https://brew.sh):
+
+```bash
+brew tap nvanwyen/tmcli
+brew install tmcli
+```
+
+To upgrade to a newer version:
+
+```bash
+brew upgrade tmcli
+```
+
+To uninstall:
+
+```bash
+brew uninstall tmcli
+brew untap nvanwyen/tmcli
+```
+
+### Building from Source
+
+#### Requirements
 
 - macOS (Time Machine / `tmutil` must be available)
 - Go 1.25.7+
 - CMake 3.20+
 
-## Building
+#### Build
 
 Use the provided `configure` script:
 
