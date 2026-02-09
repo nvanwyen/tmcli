@@ -372,8 +372,7 @@ func (m Model) renderVersion() string {
 	var info strings.Builder
 	fmt.Fprintf(&info, "Time Machine CLI %s\n\n", m.version)
 	info.WriteString("Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)\n")
-	info.WriteString("All rights reserved\n\n")
-	info.WriteString("Distributed under the MTI Software License, Version 0.1.")
+	info.WriteString("Licensed under the MIT License.")
 	b.WriteString(outputStyle.Render(info.String()))
 
 	b.WriteString("\n\n")

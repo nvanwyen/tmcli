@@ -33,9 +33,7 @@ func main() {
 	case "--version", "-version", "-v", "version":
 		fmt.Printf("Time Machine CLI %s\n\n", Version)
 		fmt.Println("Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)")
-		fmt.Println("All rights reserved")
-		fmt.Println()
-		fmt.Println("Distributed under the MTI Software License, Version 0.1.")
+		fmt.Println("Licensed under the MIT License.")
 		return
 	case "--help", "-help", "-h", "help":
 		printUsage()
