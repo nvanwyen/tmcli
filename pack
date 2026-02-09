@@ -1,0 +1,169 @@
+#!/bin/bash
+
+#
+dir="$(cd "$(dirname "$0")" && pwd)"
+
+#
+lst="${lst} cmake"
+lst="${lst} CMakeLists.txt"
+lst="${lst} configure"
+lst="${lst} README.md"
+lst="${lst} LICENSE"
+#
+lst="${lst} source"
+
+#
+function echo_checksum()
+{
+    local bgn=$(echo ${1} | head -c 7)
+    local end=$(echo ${1} | tail -c 8)
+
+    echo -n ${bgn}
+    echo -n ".."
+    echo -n ${end}
+}
+
+#
+cd ${dir}
+
+if [[ -f ./version ]] ; then
+
+    ver=$(./version)
+
+else
+
+    >&2 echo "Version data not found!"
+
+fi
+
+echo -n "Packing version: ${ver} ... "
+
+if [[ -d ./archive ]] ; then
+
+    for f in ${lst} ; do
+
+        if [[ -f ${f} ]] || [[ -d ${f} ]] ; then
+
+            tgz="${f} ${tgz}"
+
+        else
+
+            >&2 echo "File or directory [${f}] not found!"
+            exit 1
+
+        fi
+
+    done
+
+    if [[ ! -z ${tgz} ]] ; then
+
+        tar -zcvf archive/tmcli.source.${ver}.tgz ${tgz} 2>/dev/null 1>/dev/null
+
+        if [[ ${?} -eq 0 ]] ; then
+
+            if [[ -f bin/tmcli ]] ; then
+
+                ( cd bin/ && tar -zcvf ../archive/tmcli.bin.${ver}.tgz tmcli 2>/dev/null 1>/dev/null )
+
+                ( cd archive/ && sha1sum tmcli.source.${ver}.tgz > tmcli.source.${ver}.sha )
+                if [[ ${?} -ne 0 ]] ; then
+
+                    >&2 echo "Falled to generate checksun for source archive!"
+                    exit 1
+
+                fi
+
+                ( cd archive/ && sha1sum tmcli.bin.${ver}.tgz > tmcli.bin.${ver}.sha )
+                if [[ ${?} -ne 0 ]] ; then
+
+                    >&2 echo "Falled to generate checksun for binary archive!"
+                    exit 1
+
+                fi
+
+                ( cd archive/ && \
+                  tar -zcvf tmcli.${ver}.tgz tmcli.source.${ver}.tgz tmcli.source.${ver}.sha \
+                                             tmcli.bin.${ver}.tgz    tmcli.bin.${ver}.sha && \
+                  sha1sum tmcli.${ver}.tgz > tmcli.${ver}.sha )
+                if [[ ${?} -ne 0 ]] ; then
+
+                    >&2 echo "Falled to archive or create checksum for distrubution!"
+                    exit 1
+
+                fi
+
+                #
+                rm -f archive/tmcli.${ver}.md 2>&1 >/dev/null
+                echo "# Time Machine CLI (tmcli)" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+                echo "## Release ${ver}" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+
+                echo "### Commit Range" >> archive/tmcli.${ver}.md
+                echo "    From: $(echo_checksum $(git log | grep $(./version) -B 4 | grep commit | tail -n 1 | awk '{print $2}'))" >> archive/tmcli.${ver}.md
+                echo "    To:   $(echo_checksum $(git log | grep $(./version) -B 4 | grep commit | head -n 1 | awk '{print $2}'))" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+
+                echo "### Distribution" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "tmcli.${ver}.tgz - $(cat archive/tmcli.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "tmcli.${ver}.sha - $(cd archive/ && sha1sum tmcli.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+
+                echo "#### Source" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "tmcli.source.${ver}.tgz - $(cat archive/tmcli.source.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "tmcli.source.${ver}.sha - $(cd archive/ && sha1sum tmcli.source.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+
+                echo "#### Binary" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "tmcli.bin.${ver}.tgz - $(cat archive/tmcli.bin.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "tmcli.bin.${ver}.sha - $(cd archive/ && sha1sum tmcli.bin.${ver}.sha | awk '{print $1}')" >> archive/tmcli.${ver}.md
+                echo "\`\`\`" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+
+                echo "### Version change log" >> archive/tmcli.${ver}.md
+                echo "$(git log | grep $(version) | uniq | sed s/$(./version),/-/g | sed s/$(./version)./-/g))" >> archive/tmcli.${ver}.md
+                echo "" >> archive/tmcli.${ver}.md
+                echo "_Packed: $(date +%Y-%m-%d) $(date +%H:%M:%S)_" >> archive/tmcli.${ver}.md
+
+                echo "done"
+                echo
+
+                cat archive/tmcli.${ver}.md
+
+            else
+
+                >&2 echo "No binary release found!"
+                exit 1
+
+            fi
+
+        else
+
+            >&2 echo "Falled to archive source data!"
+            exit 1
+
+        fi
+
+    else
+
+        >&2 echo "Nothing to do!"
+        exit 1
+
+    fi
+
+else
+
+    >&2 echo "Not archive directory for output!"
+    exit 1
+
+fi
+
+exit 0
