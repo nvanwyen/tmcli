@@ -194,6 +194,6 @@ tmcli --help
 
 ## License
 
-Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI). All rights reserved.
+Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI).
 
-Distributed under the MTI Software License, Version 0.1.
+Licensed under the [MIT License](LICENSE).
