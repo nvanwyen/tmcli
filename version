@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# version
+# ~~~~~~~~~~~~~~~~~~~~~
+#
+# Copyright (c) 2004-2026 Metasystems Technologies Inc. (MTI)
+#
+# Licensed under the MIT License. See LICENSE file in the project root
+# for full license text.
+#
+
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 if [[ -f ${dir}/source/VERSION ]] ; then
