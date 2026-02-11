@@ -81,7 +81,7 @@ func Version() (string, error) {
 
 func formatStatus(raw string) string {
 	if strings.Contains(raw, "Running = 0") {
-		return "Time Machine is idle — no backup in progress."
+		return formatIdleStatus(raw)
 	}
 
 	fields := parseFields(raw)
@@ -145,6 +145,111 @@ func formatStatus(raw string) string {
 			if total, ok2 := progress["totalFiles"]; ok2 {
 				b.WriteString(fmt.Sprintf("    Files:       %s / %s\n", files, total))
 			}
+		}
+	}
+
+	return b.String()
+}
+
+func formatIdleStatus(raw string) string {
+	fields := parseFields(raw)
+	var b strings.Builder
+
+	b.WriteString("Time Machine Status\n")
+	b.WriteString(strings.Repeat("─", 40) + "\n\n")
+	b.WriteString("  State:         Idle\n")
+
+	// Read preferences plist for rich data (available even when disk is unmounted).
+	prefs, prefsErr := GetBackupPrefs()
+
+	// Auto-backup: prefer plist, fall back to tmutil status fields.
+	if prefsErr == nil && prefs.AutoBackupSet {
+		if prefs.AutoBackup {
+			b.WriteString("  Auto Backup:   Enabled\n")
+		} else {
+			b.WriteString("  Auto Backup:   Disabled\n")
+		}
+	} else if v, ok := fields["AutoBackup"]; ok {
+		if v == "1" {
+			b.WriteString("  Auto Backup:   Enabled\n")
+		} else {
+			b.WriteString("  Auto Backup:   Disabled\n")
+		}
+	}
+
+	// Destination info (best-effort).
+	if dest, err := GetDestinationInfo(); err == nil && dest.Name != "" {
+		label := dest.Name
+		if dest.MountPoint != "" && dest.MountPoint != dest.Name {
+			label += " (" + dest.MountPoint
+			if dest.Kind != "" {
+				label += ", " + dest.Kind
+			}
+			label += ")"
+		} else if dest.Kind != "" {
+			label += " (" + dest.Kind + ")"
+		}
+		b.WriteString(fmt.Sprintf("  Destination:   %s\n", label))
+	}
+
+	if prefsErr == nil && prefs.Encryption != "" {
+		b.WriteString(fmt.Sprintf("  Encryption:    %s\n", prefs.Encryption))
+	}
+
+	// Last backup: prefer plist SnapshotDates (works without disk), fall back to tmutil latestbackup.
+	lastShown := false
+	if prefsErr == nil && !prefs.LastSnapshot().IsZero() {
+		t := prefs.LastSnapshot()
+		b.WriteString("\n  Last Backup\n")
+		b.WriteString(fmt.Sprintf("    Completed:   %s\n", t.Local().Format("2006-01-02 15:04:05")))
+		b.WriteString(fmt.Sprintf("    Age:         %s\n", FormatDuration(time.Since(t))))
+		lastShown = true
+	}
+	if !lastShown {
+		if latest, err := LatestBackup(); err == nil && latest != "" {
+			if t, parseErr := parseBackupDate(latest); parseErr == nil {
+				b.WriteString("\n  Last Backup\n")
+				b.WriteString(fmt.Sprintf("    Completed:   %s\n", t.Local().Format("2006-01-02 15:04:05")))
+				b.WriteString(fmt.Sprintf("    Age:         %s\n", FormatDuration(time.Since(t))))
+				lastShown = true
+			}
+		}
+	}
+
+	// Backup history: prefer plist SnapshotDates, fall back to tmutil listbackups.
+	historyShown := false
+	if prefsErr == nil && len(prefs.SnapshotDates) > 0 {
+		b.WriteString("\n  Backup History\n")
+		b.WriteString(fmt.Sprintf("    Total:       %d snapshot(s)\n", len(prefs.SnapshotDates)))
+		b.WriteString(fmt.Sprintf("    Oldest:      %s\n", prefs.FirstSnapshot().Local().Format("2006-01-02 15:04:05")))
+		b.WriteString(fmt.Sprintf("    Newest:      %s\n", prefs.LastSnapshot().Local().Format("2006-01-02 15:04:05")))
+		historyShown = true
+	}
+	if !historyShown {
+		if paths, err := listBackupPaths(); err == nil && len(paths) > 0 {
+			b.WriteString("\n  Backup History\n")
+			b.WriteString(fmt.Sprintf("    Total:       %d snapshot(s)\n", len(paths)))
+			if oldest, err := parseBackupDate(paths[0]); err == nil {
+				b.WriteString(fmt.Sprintf("    Oldest:      %s\n", oldest.Local().Format("2006-01-02 15:04:05")))
+			}
+			if newest, err := parseBackupDate(paths[len(paths)-1]); err == nil {
+				b.WriteString(fmt.Sprintf("    Newest:      %s\n", newest.Local().Format("2006-01-02 15:04:05")))
+			}
+		}
+	}
+
+	// Disk usage from plist.
+	if prefsErr == nil && (prefs.BytesUsed > 0 || prefs.BytesAvailable > 0) {
+		b.WriteString("\n  Disk Usage\n")
+		if prefs.BytesUsed > 0 {
+			b.WriteString(fmt.Sprintf("    Used:        %s\n", FormatBytesInt64(prefs.BytesUsed)))
+		}
+		if prefs.BytesAvailable > 0 {
+			b.WriteString(fmt.Sprintf("    Available:   %s\n", FormatBytesInt64(prefs.BytesAvailable)))
+		}
+		if prefs.BytesUsed > 0 && prefs.BytesAvailable > 0 {
+			total := prefs.BytesUsed + prefs.BytesAvailable
+			b.WriteString(fmt.Sprintf("    Total:       %s\n", FormatBytesInt64(total)))
 		}
 	}
 

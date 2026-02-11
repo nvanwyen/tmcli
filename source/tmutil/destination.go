@@ -10,11 +10,54 @@
 
 package tmutil
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+// DestInfo holds structured destination information.
+type DestInfo struct {
+	Name       string
+	Kind       string
+	MountPoint string
+	ID         string
+}
 
 // DestinationInfo returns backup destination details.
 func DestinationInfo() (string, error) {
 	return run("destinationinfo")
+}
+
+// GetDestinationInfo returns structured destination information.
+func GetDestinationInfo() (DestInfo, error) {
+	raw, err := run("destinationinfo")
+	if err != nil {
+		return DestInfo{}, err
+	}
+	return parseDestinationInfo(raw), nil
+}
+
+func parseDestinationInfo(raw string) DestInfo {
+	var info DestInfo
+	for _, line := range strings.Split(raw, "\n") {
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+		switch key {
+		case "Name":
+			info.Name = val
+		case "Kind":
+			info.Kind = val
+		case "Mount Point":
+			info.MountPoint = val
+		case "ID":
+			info.ID = val
+		}
+	}
+	return info
 }
 
 // SetDestination sets a backup destination mount point.
