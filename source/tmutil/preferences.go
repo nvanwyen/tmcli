@@ -29,6 +29,7 @@ type BackupPrefs struct {
 	BytesUsed      int64
 	BytesAvailable int64
 	SnapshotDates  []time.Time
+	AttemptDates   []time.Time
 }
 
 // LastSnapshot returns the most recent snapshot date, or zero time if none.
@@ -45,6 +46,27 @@ func (p BackupPrefs) FirstSnapshot() time.Time {
 		return time.Time{}
 	}
 	return p.SnapshotDates[0]
+}
+
+// LastBackupDuration returns the elapsed time of the most recent backup
+// by finding the attempt date that corresponds to the last snapshot.
+// Returns zero if the data is unavailable.
+func (p BackupPrefs) LastBackupDuration() time.Duration {
+	last := p.LastSnapshot()
+	if last.IsZero() || len(p.AttemptDates) == 0 {
+		return 0
+	}
+	// Find the latest attempt date that is on or before the last snapshot.
+	var best time.Time
+	for _, a := range p.AttemptDates {
+		if !a.After(last) && a.After(best) {
+			best = a
+		}
+	}
+	if best.IsZero() {
+		return 0
+	}
+	return last.Sub(best)
 }
 
 // GetBackupPrefs reads the Time Machine preferences plist via `defaults read`.
@@ -91,6 +113,7 @@ func (p *BackupPrefs) parseDestinationBlock(raw string) {
 	lines := strings.Split(raw, "\n")
 	inDest := false
 	inSnapshots := false
+	inAttempts := false
 	inArray := "" // name of the current array being parsed
 	depth := 0
 
@@ -118,6 +141,8 @@ func (p *BackupPrefs) parseDestinationBlock(raw string) {
 					inArray = key
 					if key == "SnapshotDates" {
 						inSnapshots = true
+					} else if key == "AttemptDates" {
+						inAttempts = true
 					}
 					continue
 				}
@@ -148,6 +173,8 @@ func (p *BackupPrefs) parseDestinationBlock(raw string) {
 			if inArray != "" {
 				if inArray == "SnapshotDates" {
 					inSnapshots = false
+				} else if inArray == "AttemptDates" {
+					inAttempts = false
 				}
 				inArray = ""
 			} else {
@@ -166,14 +193,18 @@ func (p *BackupPrefs) parseDestinationBlock(raw string) {
 			continue
 		}
 
-		// Collect quoted date strings only from SnapshotDates.
-		if inSnapshots {
+		// Collect quoted date strings from SnapshotDates or AttemptDates.
+		if inSnapshots || inAttempts {
 			clean := strings.TrimSuffix(trimmed, ",")
 			clean = strings.TrimSpace(clean)
 			if strings.HasPrefix(clean, "\"") && strings.HasSuffix(clean, "\"") {
 				val := strings.Trim(clean, "\"")
 				if t, err := time.Parse(plistTimeLayout, val); err == nil {
-					p.SnapshotDates = append(p.SnapshotDates, t)
+					if inSnapshots {
+						p.SnapshotDates = append(p.SnapshotDates, t)
+					} else {
+						p.AttemptDates = append(p.AttemptDates, t)
+					}
 				}
 			}
 		}

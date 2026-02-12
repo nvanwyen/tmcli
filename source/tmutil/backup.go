@@ -202,7 +202,9 @@ func formatIdleStatus(raw string) string {
 		t := prefs.LastSnapshot()
 		b.WriteString("\n  Last Backup\n")
 		b.WriteString(fmt.Sprintf("    Completed:   %s\n", t.Local().Format("2006-01-02 15:04:05")))
-		b.WriteString(fmt.Sprintf("    Age:         %s\n", FormatDuration(time.Since(t))))
+		if d := prefs.LastBackupDuration(); d > 0 {
+			b.WriteString(fmt.Sprintf("    Elapsed:     %s\n", FormatDuration(d)))
+		}
 		lastShown = true
 	}
 	if !lastShown {
@@ -210,7 +212,6 @@ func formatIdleStatus(raw string) string {
 			if t, parseErr := parseBackupDate(latest); parseErr == nil {
 				b.WriteString("\n  Last Backup\n")
 				b.WriteString(fmt.Sprintf("    Completed:   %s\n", t.Local().Format("2006-01-02 15:04:05")))
-				b.WriteString(fmt.Sprintf("    Age:         %s\n", FormatDuration(time.Since(t))))
 				lastShown = true
 			}
 		}
